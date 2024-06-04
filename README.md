@@ -30,3 +30,5 @@ chmod +x /etc/init.d/imei_randomiser.sh
 /etc/init.d/imei_randomiser.sh enable
 ```
 
+### 🇺🇦 Author stands with Ukraine 🇺🇦
+If you want to thank me, please [donate to Ukrainian army](https://war.ukraine.ua)
