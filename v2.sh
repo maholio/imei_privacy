@@ -1,32 +1,45 @@
 #!/bin/sh /etc/rc.common
+
 START=99
 STOP=99
 
-generate_valid_imei() {
-    local prefix="${imei_prefix[$RANDOM % ${#imei_prefix[@]}]}"
-    local suffix=$((RANDOM % 10000000))
-    local full_imei="${prefix}${suffix}"
-    local check_digit=$(luhn_checkdigit "${full_imei}")
-    echo "${full_imei}${check_digit}"
+luhn_checksum() {
+    local num=0
+    local nDigits=${#1}
+    local odd=$((nDigits % 2))
+
+    for ((i=nDigits-1; i>=0; i--)); do
+        local digit=${1:$i:1}
+        if ((i % 2 == odd)); then
+            ((digit *= 2))
+            if ((digit > 9)); then
+                ((digit -= 9))
+            fi
+        fi
+        ((num += digit))
+    done
+    echo "$num"
 }
 
-luhn_checkdigit() {
-    local num=$1
-    local sum=0
-    local num_length=${#num}
-    for ((i=num_length-1;i>=0;i-=2)); do
-        let "sum+=${num:$i:1}"
+luhn_digit() {
+    local num=$(luhn_checksum "$1")
+    echo $((10 - (num % 10)))
+}
+
+is_valid_luhn() {
+    local num=$(luhn_checksum "$1")
+    ((num % 10 == 0))
+}
+
+generate_valid_imei() {
+    local prefix="${imei_prefix[$RANDOM % ${#imei_prefix[@]}]}"
+    local suffix=""
+    for ((i=0; i<6; i++)); do
+        suffix="${suffix}${RANDOM: -1}"
     done
-    for ((i=num_length-2;i>=0;i-=2)); do
-        let "temp=${num:$i:1}*2"
-        if ((temp>9)); then
-            let "sum+=(temp%10)+(temp/10)"
-        else
-            let "sum+=temp"
-        fi
-    done
-    let "check_digit=(10-(sum%10))%10"
-    echo "${check_digit}"
+    local full_imei="${prefix}${suffix}"
+    local check_digit=$(luhn_digit "${full_imei}")
+    echo "${full_imei}${check_digit}"
 }
 
 SET_IMEI() {
